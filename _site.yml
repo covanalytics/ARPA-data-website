@@ -1,0 +1,33 @@
+
+
+exclude: ["*.xlsx"]
+output_dir: "ARPA"
+navbar:
+  title: "ARPA"
+  right: 
+    - text: "Home"
+      icon: fa-building-o
+      href: https://www.covingtonky.gov/
+    
+#  type: inverse
+#  right:
+#    - text: "ARPA"
+#      href: https://www.covingtonky.gov/
+#    - text: "Spending Summary"
+#      icon: fa-dollar
+#      href: spending_summary.html
+#    - text: "Sample Menu"
+#      menu:
+#        - text: Menu 1
+#          href: index.html
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    toc_float: true
+#      collapsed: true
+    includes:
+      in_header: [favicon.html, GA_Script.html]
+      after_body: footer.html
+#    theme: cerulean
+---

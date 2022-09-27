@@ -1,0 +1,877 @@
+---
+title: "American Rescue Plan Act"
+
+---
+<style>
+
+
+body {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+.list-group-item.active,.list-group-item.active:focus, .list-group-item.active:hover {
+background-color: #46b5d2;
+border-color: #46b5d2;
+}
+
+
+.navbar-default .navbar-brand{
+color:#333; 
+font-weight: bold; !important
+}
+
+.navbar-default .navbar-brand:hover{
+color: white; !important
+font-weight: bold; !important
+}
+
+.navbar-default  {
+background-color: #46b5d2;
+border-color: #46b5d2;
+
+}
+.navbar-default .navbar-nav>li>a{
+color:#333;
+font-weight: bold;
+}
+
+.navbar-default .navbar-nav>li>a:hover{
+color:white;
+font-weight: bold;
+}
+
+.navbar-default .navbar-toggle {
+border color: "#46b5d2";
+}
+
+#tocify-extend-page {
+height: 80.797px; !important
+}
+
+</style>
+
+
+
+## Budget
+
+
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = TRUE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, cache=TRUE)
+
+library(plyr)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+library(plotly)
+library(readxl)
+library(flexdashboard)
+
+arpa <- read_excel("arpa_funds_projects.xlsx", sheet = 2 )
+arpa$Bucket[arpa$Bucket == "City Operations - Essential Worker Pay"] <- "Essential Worker Pay"
+arpa$`Project/Program Name` [arpa$`Project/Program Name`  == "Homebuyer Acquisition Rehab Program"] <- "Homeowner Asst. Program"
+
+arpa_budget <- arpa %>%
+  #mutate_at(vars(Timestamp), list(as.character))%>%
+  #filter(`Project/Program Name` != "Parking Garage")%>%
+  count(Bucket, wt = Amount, name = "Budget")%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+  
+
+  ggplot(aes(x=Bucket, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_brewer(palette = "Paired")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 20000000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  xlab("Buckets")+
+  labs(
+    title = "Total Budget--$35,914,130"
+  )+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(),
+        text = element_text(size = 13)) 
+#       axis.title.y = element_blank())
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+arpa_budget
+
+```
+
+
+## Affordable Housing {.tabset}
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+
+arpa_affordable <- arpa %>%
+  filter(Bucket == "Affordable Housing")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+ scale_fill_manual(values = "#a6cee3")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 4000000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+arpa_affordable
+
+```
+
+### Spending Summary
+
+**COMING SOON!**
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = FALSE, out.width='100%'}
+
+affordable_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 0, 
+    title = list(text = "3.35M Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250, 
+    gauge = list(
+      axis =list(range = list(NULL, 3350000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 3350000)))
+
+
+
+affordable_gauge <- affordable_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+    layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+affordable_gauge
+#export(affordable_gauge, "_site/affordable_gauge1.png")
+#orca(affordable_gauge, file = "_site/affordable_gauge1.png",  )
+#margin = list(l=20,r=30)
+
+
+```
+
+
+## Essential Worker Pay {.tabset}
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache=FALSE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+arpa_essn_wrk <- arpa %>%
+  filter(Bucket == "Essential Worker Pay")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#33a02c")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 4000000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+arpa_essn_wrk
+
+```
+
+### Spending Summary
+
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache=TRUE, out.width='100%'}
+
+essential_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 2350082.67, 
+    title = list(text = "2.50M Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 2504000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 2504000)))
+
+essential_gauge <- essential_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+essential_gauge
+
+```
+
+## City Operations {.tabset}
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache=FALSE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+arpa_ctyop <- arpa %>%
+  filter(Bucket == "City Operations")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#1f78b4")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 4000000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+arpa_ctyop
+
+```
+
+### Spending Summary
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache=FALSE, out.width='100%'}
+
+ctyops_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 583900, 
+    title = list(text = "1.45M Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 1455000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 1455000)))
+
+ctyops_gauge <- ctyops_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+ctyops_gauge
+
+```
+
+
+## Replace Revenue {.tabset}
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache=FALSE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+repl_rev <- arpa %>%
+  filter(Bucket == "Replace Revenue")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#cab2d6")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 17000000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+repl_rev
+
+```
+
+
+### Spending Summary
+
+**COMING SOON!**
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache=FALSE, out.width='100%'}
+
+reprev_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 1, 
+    title = list(text = "12.5M Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 12500000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 12500000)))
+
+reprev_gauge <- reprev_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+reprev_gauge
+
+```
+
+## Community Outreach {.tabset}
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache = FALSE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+comm_out <- arpa %>%
+  filter(Bucket == "Community Outreach")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#b2df8a")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 100000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+comm_out
+
+```
+
+### Spending Summary
+
+**COMING SOON!**
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = FALSE, out.width='100%'}
+
+comout_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 0, 
+    title = list(text = "80K Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 80000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 80000)))
+
+comout_gauge <- comout_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+comout_gauge
+
+```
+
+## Expand Access to Wi-Fi {.tabset}
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache = TRUE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+wifi_accs <- arpa %>%
+  filter(Bucket == "Expand Access to Wi-Fi")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#fb9a99")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 800000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+wifi_accs
+
+```
+
+### Spending Summary
+
+**COMING SOON!**
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = TRUE, out.width='100%'}
+
+wifi_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 0, 
+    title = list(text = "455K Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 455000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 455000)))
+
+wifi_gauge <- wifi_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+wifi_gauge
+
+```
+
+## Job Training Assistance {.tabset}
+
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache = TRUE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+jta <- arpa %>%
+  filter(Bucket == "Job Training Assistance")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#e31a1c")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 600000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+jta
+
+```
+
+
+### Spending Summary
+
+**COMING SOON!**
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = TRUE, out.width='100%'}
+
+jta_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 0, 
+    title = list(text = "375K Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 375000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 375000)))
+
+jta_gauge <- jta_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+jta_gauge
+
+```
+
+
+## Neighborhood Projects {.tabset}
+
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache = TRUE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+np <- arpa %>%
+  filter(Bucket == "Neighborhood Projects")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#fdbf6f")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 2000000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+np
+
+```
+
+### Spending Summary
+
+**COMING SOON!**
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = TRUE, out.width='100%'}
+
+np_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 0, 
+    title = list(text = "2.38M Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 2500000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 2379130)))
+
+np_gauge <- np_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+np_gauge
+
+```
+
+
+## Public Health {.tabset}
+
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache = TRUE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+pub_health <- arpa %>%
+  filter(Bucket == "Public Health")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#ff7f00")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 4000000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+pub_health
+
+```
+
+### Spending Summary
+
+**COMING SOON!**
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = TRUE, out.width='100%'}
+
+ph_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 0, 
+    title = list(text = "3.75M Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 3750000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 3750000)))
+
+ph_gauge <- ph_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+ph_gauge
+
+```
+
+
+## Small Business Assistance {.tabset}
+
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache = TRUE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+sba <- arpa %>%
+  filter(Bucket == "Small Business Assistance")%>% #& `Project/Program Name` != "Parking Garage")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#6a3d9a")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 10000000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+sba
+
+```
+
+### Spending Summary
+
+**COMING SOON!**
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = TRUE, out.width='100%'}
+
+sba_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 0, 
+    title = list(text = "7.6M Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 7600000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 7600000)))
+
+sba_gauge <- sba_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+sba_gauge
+
+```
+
+## Social Services {.tabset}
+
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache = TRUE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+soc_serv <- arpa %>%
+  filter(Bucket == "Social Services")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#ffff99")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 3000000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+soc_serv
+
+```
+
+### Spending Summary
+
+**COMING SOON!**
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = TRUE, out.width='100%'}
+
+socserv_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 0, 
+    title = list(text = "1.43M Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 1425000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 1425000)))
+
+socserv_gauge <- socserv_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+socserv_gauge
+
+```
+
+## Tourism {.tabset}
+
+### Budget
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, cache = TRUE, warning=FALSE}
+#knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+tourism <- arpa %>%
+  filter(Bucket == "Tourism")%>%
+  dplyr::rename(Budget = Amount)%>%
+  mutate(Pct. = round(Budget/ sum(Budget)*100, 1))%>%
+
+  ggplot(aes(x=`Project/Program Name`, y = Budget, fill = Bucket))+
+  geom_bar(stat = 'identity', color = "black")+
+  scale_fill_manual(values = "#b15928")+
+  scale_y_continuous(label=scales::label_number_si(), limits = c(0, 80000))+
+  coord_flip()+
+  geom_text(aes(label = paste(scales::comma(Budget, accuracy = 1.0), " ", "(", Pct., "%", ")",sep = "")),hjust = -0.1,  size = 3.5)+
+  ylab("Budget (%)")+
+  #xlab("Buckets")+
+  theme_bw()+
+  theme(legend.position = "none",
+        legend.title = element_blank(), 
+        axis.title.y = element_blank(),
+        text = element_text(size = 13))
+#       axis.text = element_text(size = 9),
+#       strip.text = element_text(size = 8),
+#      plot.title = element_text(hjust = 0.5, size = 12, color = "black"))
+
+tourism
+
+```
+
+### Spending Summary
+
+```{r eval=TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = TRUE, out.width='100%'}
+
+tourism_gauge <- plot_ly(
+    domain = list(x = c(0, 0.6), y = FALSE),
+    value = 41000, 
+    title = list(text = "41K Budget"),
+    type = "indicator",
+    mode = "gauge+number", height = 250,
+    gauge = list(
+      axis =list(range = list(NULL, 41000)),
+      #steps = list(
+      #  list(range = c(0, 250), color = "lightgray"),
+      #  list(range = c(250, 400), color = "gray")),
+      threshold = list(
+        line = list(color = "red", width = 4),
+        thickness = 0.75,
+        value = 41000)))
+
+tourism_gauge <- tourism_gauge %>%
+  config(displayModeBar = F, responsive = TRUE)%>%
+  layout(margin = list(l=20,r=20, t=50, b=20, pad = 0),
+         font = list(size = 12))
+
+tourism_gauge
+
+
+
+```
